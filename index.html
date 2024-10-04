@@ -1,0 +1,44 @@
+<html>
+
+<head>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+  <h3>CS 3300 Project 1</h3>
+  <div>
+    <svg id="heatmap" height="600" width="600" style="background-color:black"></svg>
+  </div>
+
+  <script>
+    d3.csv('heatmap.csv', d3.autoType).then((data) => {
+      const heatmap = d3.select('svg#heatmap');
+      const heatWidth = heatmap.attr('width');
+      const heatHeight = heatmap.attr('height');
+
+      const crashExtent = d3.extent(data, d => d['LOG_CRASHES']);
+      const crashScale = d3.scaleSequential()
+        .domain(crashExtent)
+        .interpolator(d3.interpolatePlasma);
+      const lonExtent = d3.extent(data, d => d['LONGITUDE']);
+      const lonScale = d3.scaleLinear()
+        .domain(lonExtent)
+        .range([0, heatWidth]);
+      const latExtent = d3.extent(data, d => d['LATITUDE']);
+      const latScale = d3.scaleLinear()
+        .domain(latExtent)
+        .range([heatHeight, 0]);
+
+      heatmap.selectAll('circle')
+        .data(data)
+        .join('circle')
+        .attr('cx', d => lonScale(d['LONGITUDE']))
+        .attr('cy', d => latScale(d['LATITUDE']))
+        .attr('r', 0.5)
+        .style('fill', d => crashScale(d['LOG_CRASHES']));
+    });
+  </script>
+
+</body>
+
+</html>
