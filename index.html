@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <title>D3 Example</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- <script src="http://d3js.org/topojson.v1.min.js"></script> -->
   <style>
     .myCircle:hover {
       stroke: black;
@@ -16,45 +17,94 @@
   <h3>CS 3300 Project 1</h3>
 
   <div>
-    <svg id="heatmap" height="600" width="600" style="background-color:black"></svg>
+    <svg id="heatmap" height="475" width="600" style="background-color:black">
+      <g id="legend" transform="translate(40, 40)"></g>
+    </svg>
   </div>
 
   <script>
+    // add NY border overlay, plus major cities, legend of amount of crashes, increase area per point
     d3.csv('heatmap.csv', d3.autoType).then((data) => {
       const heatmap = d3.select('svg#heatmap');
       const heatWidth = heatmap.attr('width');
       const heatHeight = heatmap.attr('height');
 
-      const crashExtent = d3.extent(data, d => d['LOG_CRASHES']);
+      const crashExtent = d3.extent(data, d => d['LOG_CRASHES']); //LOG_CRASHES
+      const tcrashExtent = d3.extent(data, d => d['CRASHES']); //LOG_CRASHES
       const crashScale = d3.scaleSequential()
         .domain(crashExtent)
         .interpolator(d3.interpolatePlasma);
       const lonExtent = d3.extent(data, d => d['LONGITUDE']);
       const lonScale = d3.scaleLinear()
         .domain(lonExtent)
-        .range([0, heatWidth]);
+        .range([105, heatWidth - 60]);
       const latExtent = d3.extent(data, d => d['LATITUDE']);
       const latScale = d3.scaleLinear()
         .domain(latExtent)
-        .range([heatHeight, 0]);
+        .range([heatHeight - 15, 10]);
 
-      heatmap.selectAll('circle')
-        .data(data)
-        .join('circle')
-        .attr('cx', d => lonScale(d['LONGITUDE']))
-        .attr('cy', d => latScale(d['LATITUDE']))
-        .attr('r', 0.5)
-        .style('fill', d => crashScale(d['LOG_CRASHES']));
+      d3.json("boundaries.geojson").then((nyc) => {
+        let projection = d3.geoAlbers()
+          .center([0, 40.7128])
+          .rotate([74.0060, 0])
+          .parallels([41, 44])
+          .translate([heatWidth / 2, heatHeight / 2])
+          .scale(60000) // scale factor
+
+        heatmap.append("path")
+          .datum(nyc)
+          .style("stroke", "#bbb")
+          .attr("d", d3.geoPath().projection(projection));
+
+        heatmap.selectAll('rect')
+          .data(data)
+          .join('rect')
+          .attr('x', d => lonScale(d['LONGITUDE']))
+          .attr('y', d => latScale(d['LATITUDE']))
+          .attr('width', .8) // 8
+          .attr('height', 1.05) // 10.5
+          .attr('fill', d => crashScale(d['LOG_CRASHES']));
+
+        const legendScale = d3.scaleLinear()
+          .domain(crashExtent)
+          .range([30, 200]);
+
+        let crashes = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, crashExtent[1]];
+        d3.select("#legend")
+          .selectAll('rect')
+          .data(crashes)
+          .join('rect')
+          .attr('x', d => legendScale(d))
+          .attr('height', 15)
+          .attr('width', 7)
+          .style('fill', d => crashScale(d));
+
+        d3.select('#legend')
+          .append('text')
+          .text('1')
+          .style('fill', 'white')
+          .attr('x', 31)
+          .attr('y', 25)
+          .style('font-size', '10px');
+        d3.select('#legend')
+          .append('text')
+          .text(`${tcrashExtent[1]}`)
+          .style('fill', 'white')
+          .attr('x', 195)
+          .attr('y', 25)
+          .style('font-size', '10px');
+      });
+
     });
   </script>
 
-<h3>Section #2: Line Chart</h3>
+  <h3>Section #2: Line Chart</h3>
   <div id="line-chart"></div>
 
   <script>
     var margin = { top: 10, right: 30, bottom: 30, left: 60 },
-        width = 460 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
+      width = 460 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
 
     var svg = d3.select("#line-chart")
       .append("svg")
@@ -64,80 +114,80 @@
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     // Load data for the line chart
-    d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv", function(d) {
-        return { date: d3.timeParse("%Y-%m-%d")(d.date), value: +d.value };
-    }).then(function(data) {
+    d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv", function (d) {
+      return { date: d3.timeParse("%Y-%m-%d")(d.date), value: +d.value };
+    }).then(function (data) {
 
-        // X axis
-        var x = d3.scaleTime()
-          .domain(d3.extent(data, function(d) { return d.date; }))
-          .range([0, width]);
+      // X axis
+      var x = d3.scaleTime()
+        .domain(d3.extent(data, function (d) { return d.date; }))
+        .range([0, width]);
 
-        svg.append("g")
-          .attr("transform", "translate(0," + height + ")")
-          .call(d3.axisBottom(x));
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
 
-        // Y axis
-        var y = d3.scaleLinear()
-          .domain([8000, 9200])
-          .range([height, 0]);
+      // Y axis
+      var y = d3.scaleLinear()
+        .domain([8000, 9200])
+        .range([height, 0]);
 
-        svg.append("g")
-          .call(d3.axisLeft(y));
+      svg.append("g")
+        .call(d3.axisLeft(y));
 
-        svg.append("path")
-          .datum(data)
-          .attr("fill", "none")
-          .attr("stroke", "black")
-          .attr("stroke-width", 1.5)
-          .attr("d", d3.line()
-            .curve(d3.curveBasis)
-            .x(function(d) { return x(d.date); })
-            .y(function(d) { return y(d.value); })
-          );
+      svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+          .curve(d3.curveBasis)
+          .x(function (d) { return x(d.date); })
+          .y(function (d) { return y(d.value); })
+        );
 
-        // Tooltip setup
-        var Tooltip = d3.select("body")
-          .append("div")
-          .style("opacity", 0)
-          .attr("class", "tooltip")
-          .style("background-color", "white")
-          .style("border", "solid")
-          .style("border-width", "2px")
-          .style("border-radius", "5px")
-          .style("padding", "5px");
+      // Tooltip setup
+      var Tooltip = d3.select("body")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("padding", "5px");
 
-        // Tooltip events
-        var mouseover = function() {
-          Tooltip.style("opacity", 1);
-        };
+      // Tooltip events
+      var mouseover = function () {
+        Tooltip.style("opacity", 1);
+      };
 
-        var mousemove = function(event, d) {
-          Tooltip.html("Exact value: " + d.value)
-            .style("left", (event.pageX + 20) + "px")
-            .style("top", (event.pageY - 30) + "px");
-        };
+      var mousemove = function (event, d) {
+        Tooltip.html("Exact value: " + d.value)
+          .style("left", (event.pageX + 20) + "px")
+          .style("top", (event.pageY - 30) + "px");
+      };
 
-        var mouseleave = function() {
-          Tooltip.style("opacity", 0);
-        };
+      var mouseleave = function () {
+        Tooltip.style("opacity", 0);
+      };
 
-        // Add points
-        svg.append("g")
-          .selectAll("dot")
-          .data(data)
-          .enter()
-          .append("circle")
-            .attr("class", "myCircle")
-            .attr("cx", function(d) { return x(d.date); })
-            .attr("cy", function(d) { return y(d.value); })
-            .attr("r", 8)
-            .attr("stroke", "#69b3a2")
-            .attr("stroke-width", 3)
-            .attr("fill", "white")
-            .on("mouseover", mouseover)
-            .on("mousemove", mousemove)
-            .on("mouseleave", mouseleave);
+      // Add points
+      svg.append("g")
+        .selectAll("dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "myCircle")
+        .attr("cx", function (d) { return x(d.date); })
+        .attr("cy", function (d) { return y(d.value); })
+        .attr("r", 8)
+        .attr("stroke", "#69b3a2")
+        .attr("stroke-width", 3)
+        .attr("fill", "white")
+        .on("mouseover", mouseover)
+        .on("mousemove", mousemove)
+        .on("mouseleave", mouseleave);
     }).catch(error => {
       console.error('Error loading connectedscatter.csv:', error);
     });
@@ -148,8 +198,8 @@
 
   <script>
     var margin3 = { top: 10, right: 30, bottom: 30, left: 40 },
-        width3 = 460 - margin3.left - margin3.right,
-        height3 = 400 - margin3.top - margin3.bottom;
+      width3 = 460 - margin3.left - margin3.right,
+      height3 = 400 - margin3.top - margin3.bottom;
 
     var svg3 = d3.select("#histogram-chart")
       .append("svg")
@@ -158,39 +208,39 @@
       .append("g")
       .attr("transform", "translate(" + margin3.left + "," + margin3.top + ")");
 
-    d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv").then(function(data) {
+    d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv").then(function (data) {
 
-        var x3 = d3.scaleLinear()
-          .domain([0, 1000])
-          .range([0, width3]);
+      var x3 = d3.scaleLinear()
+        .domain([0, 1000])
+        .range([0, width3]);
 
-        svg3.append("g")
-          .attr("transform", "translate(0," + height3 + ")")
-          .call(d3.axisBottom(x3));
+      svg3.append("g")
+        .attr("transform", "translate(0," + height3 + ")")
+        .call(d3.axisBottom(x3));
 
-        var histogram = d3.histogram()
-          .value(function(d) { return d.price; })
-          .domain(x3.domain())
-          .thresholds(x3.ticks(70));
+      var histogram = d3.histogram()
+        .value(function (d) { return d.price; })
+        .domain(x3.domain())
+        .thresholds(x3.ticks(70));
 
-        var bins = histogram(data);
+      var bins = histogram(data);
 
-        var y3 = d3.scaleLinear()
-          .range([height3, 0]);
-        y3.domain([0, d3.max(bins, function(d) { return d.length; })]);
+      var y3 = d3.scaleLinear()
+        .range([height3, 0]);
+      y3.domain([0, d3.max(bins, function (d) { return d.length; })]);
 
-        svg3.append("g")
-          .call(d3.axisLeft(y3));
+      svg3.append("g")
+        .call(d3.axisLeft(y3));
 
-        svg3.selectAll("rect")
-          .data(bins)
-          .enter()
-          .append("rect")
-            .attr("x", 1)
-            .attr("transform", function(d) { return "translate(" + x3(d.x0) + "," + y3(d.length) + ")"; })
-            .attr("width", function(d) { return x3(d.x1) - x3(d.x0) - 1; })
-            .attr("height", function(d) { return height3 - y3(d.length); })
-            .style("fill", "#69b3a2");
+      svg3.selectAll("rect")
+        .data(bins)
+        .enter()
+        .append("rect")
+        .attr("x", 1)
+        .attr("transform", function (d) { return "translate(" + x3(d.x0) + "," + y3(d.length) + ")"; })
+        .attr("width", function (d) { return x3(d.x1) - x3(d.x0) - 1; })
+        .attr("height", function (d) { return height3 - y3(d.length); })
+        .style("fill", "#69b3a2");
     }).catch(error => {
       console.error('Error loading 1_OneNum.csv:', error);
     });
