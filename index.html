@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="utf-8">
-  <title>CS 3300 Project 1</title>
+  <center><h1>CS 3300 Project 1</h1></center>
+  
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     .myCircle:hover {
@@ -13,7 +14,14 @@
 </head>
 
 <body>
-  <h3>CS 3300 Project 1</h3>
+  <center>
+    
+    <h3>Jeana Hoffmann</h3>
+    <h3>Simon Tian</h3>
+    <h3>Colins Wu</h3>
+
+  </center>
+  
 
   <div>
     <svg id="heatmap" height="475" width="600" style="background-color:black">
@@ -101,96 +109,68 @@
   <div id="line-chart"></div>
 
   <script>
-    var margin = { top: 10, right: 30, bottom: 30, left: 60 },
-      width = 460 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
+  var margin = { top: 10, right: 30, bottom: 30, left: 60 },
+    width = 860 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
-    var svg = d3.select("#line-chart")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  var svg = d3.select("#line-chart")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    // Load data for the line chart
-    d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/connectedscatter.csv", function (d) {
-      return { date: d3.timeParse("%Y-%m-%d")(d.date), value: +d.value };
-    }).then(function (data) {
+ 
+  d3.csv("Crash_Monthly_Count.csv", function(d) 
+  {
+    return { 
+      date: d3.timeParse("%Y-%m-%d")(d.Crash_Month),
+      crashes: +d.TotalCrash
+    };
+  }).then(function(data) {
 
-      // X axis
-      var x = d3.scaleTime()
-        .domain(d3.extent(data, function (d) { return d.date; }))
-        .range([0, width]);
+  console.log(data)
 
-      svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
 
-      // Y axis
-      var y = d3.scaleLinear()
-        .domain([8000, 9200])
-        .range([height, 0]);
+  var x = d3.scaleTime()
+    .domain(d3.extent(data, function(d) { return d.date; }))
+    .range([0, width]);
 
-      svg.append("g")
-        .call(d3.axisLeft(y));
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
 
-      svg.append("path")
-        .datum(data)
-        .attr("fill", "none")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1.5)
-        .attr("d", d3.line()
-          .curve(d3.curveBasis)
-          .x(function (d) { return x(d.date); })
-          .y(function (d) { return y(d.value); })
-        );
 
-      // Tooltip setup
-      var Tooltip = d3.select("body")
-        .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "white")
-        .style("border", "solid")
-        .style("border-width", "2px")
-        .style("border-radius", "5px")
-        .style("padding", "5px");
+  var y = d3.scaleLinear()
+    .domain([0, d3.max(data, function(d) { return d.crashes; })])
+    .range([height, 0]);
 
-      // Tooltip events
-      var mouseover = function () {
-        Tooltip.style("opacity", 1);
-      };
+  svg.append("g")
+    .call(d3.axisLeft(y));
 
-      var mousemove = function (event, d) {
-        Tooltip.html("Exact value: " + d.value)
-          .style("left", (event.pageX + 20) + "px")
-          .style("top", (event.pageY - 30) + "px");
-      };
+  svg.append("path")
+    .datum(data)
+    .attr("fill", "none")
+    .attr("stroke", "black")
+    .attr("stroke-width", 1.5)
+    .attr("d", d3.line()
+      .x(function(d) { return x(d.date); })
+      .y(function(d) { return y(d.crashes); })
+    );
 
-      var mouseleave = function () {
-        Tooltip.style("opacity", 0);
-      };
+  svg.selectAll("circle")
+    .data(data)
+    .join("circle")
+    .attr("cx", function(d) { return x(d.date); })
+    .attr("cy", function(d) { return y(d.crashes); })
+    .attr("r", 5)
+    .attr("fill", "#69b3a2")
 
-      // Add points
-      svg.append("g")
-        .selectAll("dot")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("class", "myCircle")
-        .attr("cx", function (d) { return x(d.date); })
-        .attr("cy", function (d) { return y(d.value); })
-        .attr("r", 8)
-        .attr("stroke", "#69b3a2")
-        .attr("stroke-width", 3)
-        .attr("fill", "white")
-        .on("mouseover", mouseover)
-        .on("mousemove", mousemove)
-        .on("mouseleave", mouseleave);
-    }).catch(error => {
-      console.error('Error loading connectedscatter.csv:', error);
-    });
-  </script>
+}).catch(error => {
+  console.error('Error loading Crash_Monthly_Count.csv:', error);
+});
+
+</script>
 
   <h3>Section #3: Histogram</h3>
   <div id="histogram-chart"></div>
