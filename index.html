@@ -2,10 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <center><h1>CS 3300 Project 1</h1></center>
+
+    <title>Car Crashes NYC</title>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
+
     <style>
+      * {
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        background-color: black;
+        color: white;
+      }
+
       .myCircle:hover {
         stroke: black;
       }
@@ -18,16 +29,24 @@
         stroke: #aaa;
       }
     </style>
-    <title>Car Crash NYC</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
   </head>
 
   <body>
+    <center><h1>CS 3300 Project 1</h1></center>
     <center>
       <h3>Jeana Hoffmann</h3>
       <h3>Simon Tian</h3>
       <h3>Colin Wu</h3>
     </center>
 
+    <h3>Section #1: Heatmap</h3>
     <div>
       <svg
         id="heatmap"
@@ -227,7 +246,7 @@
       <svg
         id="barchart"
         height="500"
-        width="800"
+        width="1100"
         style="margin-top: 50px; background-color: black"
       ></svg>
     </div>
@@ -292,7 +311,6 @@
             }) rotate(-90)`
           )
           .attr("font-size", "14px")
-          .attr("font-weight", "bold")
           .attr("fill", "white")
           .text("Number of Crashes");
 
@@ -324,7 +342,6 @@
           .attr("x", margin3.left + chartWidth3 / 2)
           .attr("y", height3 - 20)
           .attr("font-size", "14px")
-          .attr("font-weight", "bold")
           .attr("fill", "white")
           .text("Crash Hour");
 
