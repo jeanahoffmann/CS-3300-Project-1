@@ -46,9 +46,7 @@
 
   <body>
     <center><h1>NYC Car Crashes (2020-2024)</h1></center>
-    <center>
-      Jeana Hoffmann, Simon Tian, Colin Wu
-    </center>
+    <center>Jeana Hoffmann, Simon Tian, Colin Wu</center>
 
     <h3>Section 1: Heatmap</h3>
     Number of Car Crashes Per Location from 2020-2024
@@ -295,12 +293,9 @@
           .attr("class", "y axis")
           .attr("transform", `translate(${margin3.left - 10},${margin3.top})`)
           .call(leftAxis)
-          .selectAll("text")
-          .attr("fill", "white");
+          .selectAll("text");
 
-        annotations
-          .selectAll(".y.axis line, .y.axis path")
-          .attr("stroke", "white");
+        annotations.selectAll(".y.axis line, .y.axis path");
 
         annotations
           .append("g")
@@ -341,10 +336,6 @@
           )
           .call(bottomAxis);
 
-        bottomAxisG.selectAll("text").attr("fill", "white");
-
-        bottomAxisG.selectAll("line, path").attr("stroke", "white");
-
         annotations
           .append("text")
           .attr("class", "x axis-label")
@@ -353,7 +344,7 @@
           .attr("y", height3 - 20)
           .attr("font-size", "14px")
           .attr("fill", "white")
-          .text("Crash Hour");
+          .text("Time (Hour)");
 
         chartArea
           .selectAll("rect.bar")
@@ -365,8 +356,8 @@
           .attr("y", d => countScale(d["COUNT"]))
           .attr("height", d => countScale(0) - countScale(d["COUNT"]))
           .attr("width", hourScale.bandwidth())
-          .attr("rx", 5)
-          .attr("ry", 5);
+          .attr("rx", 8)
+          .attr("ry", 8);
       });
     </script>
   </body>
