@@ -194,8 +194,8 @@
 
         d3.csv("Crash_Monthly_Count.csv", function (d) {
           return {
-            date: d3.timeParse("%Y-%m-%d")(d.Crash_Month),
-            crashes: +d.TotalCrash,
+            date: d3.timeParse("%Y-%m-%d")(d.Date),
+            crashes: +d.Counts,
           };
         })
           .then(function (data) {
