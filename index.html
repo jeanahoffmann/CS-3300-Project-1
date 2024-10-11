@@ -120,9 +120,7 @@
             .attr("cy", d => latScale(d["LATITUDE"]))
             .attr("r", d => (d["CRASHES"] > 100 ? d["CRASHES"] * .03 : 0)) // 8
             .attr("fill", d => crashScale(d["LOG_CRASHES"]))
-            .attr('opacity', 0.75)
-            .attr("stroke", d => crashScale(d["LOG_CRASHES"]))
-            .attr("stroke-width", 1);
+            .attr('opacity', 0.75);
 
           const legendScale = d3
             .scaleLinear()
