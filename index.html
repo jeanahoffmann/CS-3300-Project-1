@@ -269,7 +269,7 @@
         <svg
           id="barchart"
           height="400"
-          width="860"
+          width="960"
           style="margin-top: 50px"
         ></svg>
       </div>
@@ -339,7 +339,7 @@
             .scaleBand()
             .domain(hours)
             .range([0, chartWidth3])
-            .padding(0.5);
+            .padding(0.4);
 
           let bottomAxis = d3.axisBottom(hourScale).tickFormat(d => d + ":00");
           let bottomAxisG = annotations
