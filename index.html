@@ -54,7 +54,7 @@
   Number of Car Crashes Per Location from 2020-2024
 
   <div>
-    <svg id="heatmap" height="475" width="600" style="background-color: black">
+    <svg id="heatmap" height="950" width="1200" style="background-color: black">
       <g id="legend" transform="translate(40, 40)"></g>
     </svg>
   </div>
@@ -76,12 +76,12 @@
       const lonScale = d3
         .scaleLinear()
         .domain(lonExtent)
-        .range([105, heatWidth - 60]);
+        .range([210, heatWidth - 120]);
       const latExtent = d3.extent(data, d => d["LATITUDE"]);
       const latScale = d3
         .scaleLinear()
         .domain(latExtent)
-        .range([heatHeight - 15, 10]);
+        .range([heatHeight - 30, 20]);
 
       d3.json("boundaries.geojson").then(nyc => {
         let projection = d3
@@ -90,7 +90,7 @@
           .rotate([74.006, 0])
           .parallels([41, 44])
           .translate([heatWidth / 2, heatHeight / 2])
-          .scale(60000); // scale factor
+          .scale(120000); // scale factor
 
         heatmap
           .append("path")
@@ -104,8 +104,8 @@
           .join("rect")
           .attr("x", d => lonScale(d["LONGITUDE"]))
           .attr("y", d => latScale(d["LATITUDE"]))
-          .attr("width", 0.8) // 8
-          .attr("height", 1.05) // 10.5
+          .attr("width", 1.9) // 8
+          .attr("height", 2.1) // 10.5
           .attr("fill", d => crashScale(d["LOG_CRASHES"]));
 
         const legendScale = d3
