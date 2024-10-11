@@ -1,405 +1,398 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
 
-    <title>Car Crashes NYC</title>
+<head>
+  <meta charset="utf-8" />
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+  <title>Car Crashes NYC</title>
 
-    <style>
-      * {
-        font-family: "Inter", sans-serif;
-      }
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
-      body {
-        margin-top: 40px;
-        background-color: black;
-        color: white;
-        
-      }
+  <style>
+    * {
+      font-family: "Inter", sans-serif;
+    }
 
-      h3 {
-        margin-top: 40px;
-      }
+    body {
+      margin-top: 40px;
+      background-color: black;
+      color: white;
 
-      .myCircle:hover {
-        stroke: black;
-      }
+    }
 
-      .gridlines .domain {
-        display: none;
-      }
+    h3 {
+      margin-top: 40px;
+    }
 
-      .gridlines line {
-        stroke: #aaa;
-      }
-    </style>
+    .myCircle:hover {
+      stroke: black;
+    }
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-      rel="stylesheet"
-    />
-  </head>
+    .gridlines .domain {
+      display: none;
+    }
 
-  <body>
-    <center>
-      <h1>NYC Car Crashes (2020-2024)</h1>
-    </center>
-    <center>Jeana Hoffmann, Simon Tian, Colin Wu</center>
+    .gridlines line {
+      stroke: #aaa;
+    }
+  </style>
 
-    <center>
-      <h3>Section 1: Heatmap</h3>
-      Number of Car Crashes Per Location from 2020-2024 (Log Scale)
-      <div style="font-size: 12px; margin-top: 16px">
-        Big circles represent places with >= 100 crashes
-      </div>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet" />
+</head>
 
-      <div>
-        <svg
-          id="heatmap"
-          height="950"
-          width="1200"
-          style="background-color: black"
-        >
-          <g id="legend" transform="translate(40, 40)"></g>
-        </svg>
-      </div>
+<body>
+  <center>
+    <h1>NYC Car Crashes (2020-2024)</h1>
+  </center>
+  <center>Jeana Hoffmann, Simon Tian, Colin Wu</center>
 
-      <script>
-        // add NY border overlay, plus major cities, legend of amount of crashes, increase area per point
-        d3.csv("heatmap.csv", d3.autoType).then(data => {
-          const heatmap = d3.select("svg#heatmap");
-          const heatWidth = heatmap.attr("width");
-          const heatHeight = heatmap.attr("height");
+  <center>
+    <h3>Section 1: Heatmap</h3>
+    Number of Car Crashes Per Location from 2020-2024 (Log Scale)
+    <div style="font-size: 12px; margin-top: 16px">
+      Big circles represent places with >= 100 crashes
+    </div>
 
-          const crashExtent = d3.extent(data, d => d["LOG_CRASHES"]); //LOG_CRASHES
-          const tcrashExtent = d3.extent(data, d => d["CRASHES"]); //LOG_CRASHES
-          const crashScale = d3
-            .scaleSequential()
+    <div>
+      <svg id="heatmap" height="950" width="1200" style="background-color: black">
+        <g id="legend" transform="translate(40, 40)"></g>
+      </svg>
+    </div>
+
+    <script>
+      // add NY border overlay, plus major cities, legend of amount of crashes, increase area per point
+      d3.csv("heatmap.csv", d3.autoType).then(data => {
+        const heatmap = d3.select("svg#heatmap");
+        const heatWidth = heatmap.attr("width");
+        const heatHeight = heatmap.attr("height");
+
+        const crashExtent = d3.extent(data, d => d["LOG_CRASHES"]); //LOG_CRASHES
+        const tcrashExtent = d3.extent(data, d => d["CRASHES"]); //LOG_CRASHES
+        const crashScale = d3
+          .scaleSequential()
+          .domain(crashExtent)
+          .interpolator(d3.interpolatePlasma);
+        const lonExtent = d3.extent(data, d => d["LONGITUDE"]);
+        const lonScale = d3
+          .scaleLinear()
+          .domain(lonExtent)
+          .range([210, heatWidth - 120]);
+        const latExtent = d3.extent(data, d => d["LATITUDE"]);
+        const latScale = d3
+          .scaleLinear()
+          .domain(latExtent)
+          .range([heatHeight - 30, 20]);
+
+        d3.json("boundaries.geojson").then(nyc => {
+          let projection = d3
+            .geoAlbers()
+            .center([0, 40.7128])
+            .rotate([74.006, 0])
+            .parallels([41, 44])
+            .translate([heatWidth / 2, heatHeight / 2])
+            .scale(120000); // scale factor
+
+          heatmap
+            .append("path")
+            .datum(nyc)
+            .style("stroke", "#bbb")
+            .attr("d", d3.geoPath().projection(projection));
+
+          heatmap
+            .selectAll("rect")
+            .data(data)
+            .join("rect")
+            .attr("x", d => lonScale(d["LONGITUDE"]))
+            .attr("y", d => latScale(d["LATITUDE"]))
+            .attr("width", d => (d["CRASHES"] > 100 ? 0 : 1.6))
+            .attr("height", d => (d["CRASHES"] > 100 ? 0 : 2.1)) // 8
+            .attr("fill", d => crashScale(d["LOG_CRASHES"]));
+
+          heatmap
+            .selectAll("circle")
+            .data(data)
+            .join("circle")
+            .attr("cx", d => lonScale(d["LONGITUDE"]))
+            .attr("cy", d => latScale(d["LATITUDE"]))
+            .attr("r", d => (d["CRASHES"] > 100 ? d["CRASHES"] * .03 : 0)) // 8
+            .attr("fill", d => crashScale(d["LOG_CRASHES"]))
+            .attr('opacity', 0.75)
+            .attr("stroke", d => crashScale(d["LOG_CRASHES"]))
+            .attr("stroke-width", 1);
+
+          const legendScale = d3
+            .scaleLinear()
             .domain(crashExtent)
-            .interpolator(d3.interpolatePlasma);
-          const lonExtent = d3.extent(data, d => d["LONGITUDE"]);
-          const lonScale = d3
-            .scaleLinear()
-            .domain(lonExtent)
-            .range([210, heatWidth - 120]);
-          const latExtent = d3.extent(data, d => d["LATITUDE"]);
-          const latScale = d3
-            .scaleLinear()
-            .domain(latExtent)
-            .range([heatHeight - 30, 20]);
+            .range([30, 200]);
 
-          d3.json("boundaries.geojson").then(nyc => {
-            let projection = d3
-              .geoAlbers()
-              .center([0, 40.7128])
-              .rotate([74.006, 0])
-              .parallels([41, 44])
-              .translate([heatWidth / 2, heatHeight / 2])
-              .scale(120000); // scale factor
+          let crashes = [
+            0,
+            0.5,
+            1,
+            1.5,
+            2,
+            2.5,
+            3,
+            3.5,
+            4,
+            4.5,
+            5,
+            5.5,
+            crashExtent[1],
+          ];
 
-            heatmap
-              .append("path")
-              .datum(nyc)
-              .style("stroke", "#bbb")
-              .attr("d", d3.geoPath().projection(projection));
+          d3.select("#legend")
+            .selectAll("rect")
+            .data(crashes)
+            .join("rect")
+            .attr("x", d => legendScale(d))
+            .attr("height", 15)
+            .attr("width", 7)
+            .style("fill", d => crashScale(d));
 
-            heatmap
-              .selectAll("rect")
-              .data(data)
-              .join("rect")
-              .attr("x", d => lonScale(d["LONGITUDE"]))
-              .attr("y", d => latScale(d["LATITUDE"]))
-              .attr("width", d => (d["CRASHES"] > 100 ? 0 : 1.6))
-              .attr("height", d => (d["CRASHES"] > 100 ? 0 : 2.1)) // 8
-              .attr("fill", d => crashScale(d["LOG_CRASHES"]));
-
-            heatmap
-              .selectAll("circle")
-              .data(data)
-              .join("circle")
-              .attr("cx", d => lonScale(d["LONGITUDE"]))
-              .attr("cy", d => latScale(d["LATITUDE"]))
-              .attr("r", d => (d["CRASHES"] > 100 ? 1.9 * 2 : 0)) // 8
-              .attr("fill", d => crashScale(d["LOG_CRASHES"]));
-
-            const legendScale = d3
-              .scaleLinear()
-              .domain(crashExtent)
-              .range([30, 200]);
-
-            let crashes = [
-              0,
-              0.5,
-              1,
-              1.5,
-              2,
-              2.5,
-              3,
-              3.5,
-              4,
-              4.5,
-              5,
-              5.5,
-              crashExtent[1],
-            ];
-
-            d3.select("#legend")
-              .selectAll("rect")
-              .data(crashes)
-              .join("rect")
-              .attr("x", d => legendScale(d))
-              .attr("height", 15)
-              .attr("width", 7)
-              .style("fill", d => crashScale(d));
-
-            d3.select("#legend")
-              .append("text")
-              .text("1")
-              .style("fill", "white")
-              .attr("x", 31)
-              .attr("y", 25)
-              .style("font-size", "10px");
-            d3.select("#legend")
-              .append("text")
-              .text(`${tcrashExtent[1]}`)
-              .style("fill", "white")
-              .attr("x", 195)
-              .attr("y", 25)
-              .style("font-size", "10px");
-          });
-        });
-      </script>
-
-      <h3>Section 2: Line Chart</h3>
-
-      Number of Car Crashes Each Month from 2019-2024
-
-      <div id="line-chart"></div>
-
-      <script>
-        let margin = { top: 10, right: 30, bottom: 50, left: 70 },
-          width = 860 - margin.left - margin.right,
-          height = 400 - margin.top - margin.bottom;
-
-        const svg = d3
-          .select("#line-chart")
-          .append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom);
-
-        const chartGroup = svg
-          .append("g")
-          .attr(
-            "transform",
-            "translate(" + margin.left + "," + margin.top + ")"
-          );
-
-        d3.csv("Crash_Monthly_Count.csv", function (d) {
-          return {
-            date: d3.timeParse("%Y-%m-%d")(d.Date),
-            crashes: +d.Counts,
-          };
-        })
-          .then(function (data) {
-            let x = d3
-              .scaleTime()
-              .domain(
-                d3.extent(data, function (d) {
-                  return d.date;
-                })
-              )
-              .range([0, width]);
-
-            chartGroup
-              .append("g")
-              .attr("transform", "translate(0," + height + ")")
-              .call(d3.axisBottom(x));
-
-            let y = d3
-              .scaleLinear()
-              .domain([
-                0,
-                d3.max(data, function (d) {
-                  return d.crashes;
-                }),
-              ])
-              .range([height, 0]);
-
-            chartGroup.append("g").call(d3.axisLeft(y));
-
-            svg
-              .append("text")
-              .attr("class", "x-axis-label")
-              .attr("text-anchor", "middle")
-              .attr("x", (width + margin.left + margin.right) / 2)
-              .attr("y", height + margin.top + margin.bottom - 10)
-              .attr("font-size", "14px")
-              .attr("fill", "white")
-              .text("Year");
-
-            svg
-              .append("text")
-              .attr("class", "y-axis-label")
-              .attr("text-anchor", "middle")
-              .attr("transform", "rotate(-90)")
-              .attr("x", -(height + margin.top + margin.bottom) / 2)
-              .attr("y", 14)
-              .attr("font-size", "14px")
-              .attr("fill", "white")
-              .text("Number of Crashes");
-
-            chartGroup
-              .append("path")
-              .datum(data)
-              .attr("fill", "none")
-              .attr("stroke", "white")
-              .attr("stroke-width", 1.5)
-              .attr(
-                "d",
-                d3
-                  .line()
-                  .x(function (d) {
-                    return x(d.date);
-                  })
-                  .y(function (d) {
-                    return y(d.crashes);
-                  })
-              );
-
-            chartGroup
-              .selectAll("circle")
-              .data(data)
-              .join("circle")
-              .attr("cx", function (d) {
-                return x(d.date);
-              })
-              .attr("cy", function (d) {
-                return y(d.crashes);
-              })
-              .attr("r", 5)
-              .attr("fill", "#69b3a2");
-          })
-          .catch(error => {
-            console.error("Error loading Crash_Monthly_Count.csv:", error);
-          });
-      </script>
-
-      <h3>Section 3: Histogram</h3>
-      Total Number of Car Crashes At Each Hour (2020-2024)
-      <div>
-        <svg
-          id="barchart"
-          height="400"
-          width="960"
-          style="margin-top: 50px"
-        ></svg>
-      </div>
-
-      <script>
-        const svg3 = d3
-          .select("svg#barchart")
-          .attr("style", "background-color: #000000;");
-        const width3 = svg3.attr("width");
-        const height3 = svg3.attr("height");
-        const margin3 = { top: 20, right: 20, bottom: 70, left: 100 };
-        const chartWidth3 = width3 - margin3.left - margin3.right;
-        const chartHeight3 = height3 - margin3.top - margin3.bottom;
-
-        let annotations = svg3.append("g").attr("id", "annotations");
-
-        let chartArea = svg3
-          .append("g")
-          .attr("id", "points")
-          .attr("transform", `translate(${margin3.left},${margin3.top})`);
-
-        d3.csv("Hourly_Crash_Count.csv", d3.autoType).then(data => {
-          const countScale = d3
-            .scaleLinear()
-            .domain([0, d3.max(data, d => d["COUNT"])])
-            .range([chartHeight3, 0]);
-
-          let leftAxis = d3.axisLeft(countScale);
-          let leftGridlines = d3
-            .axisLeft(countScale)
-            .tickSize(-chartWidth3 - 10)
-            .tickFormat("");
-
-          annotations
-            .append("g")
-            .attr("class", "y axis")
-            .attr("transform", `translate(${margin3.left - 10},${margin3.top})`)
-            .call(leftAxis)
-            .selectAll("text");
-
-          annotations.selectAll(".y.axis line, .y.axis path");
-
-          annotations
-            .append("g")
-            .attr("class", "y gridlines")
-            .attr("transform", `translate(${margin3.left - 10},${margin3.top})`)
-            .call(leftGridlines)
-            .selectAll("line")
-            .attr("stroke", "#444444");
-
-          annotations
+          d3.select("#legend")
             .append("text")
-            .attr("class", "y axis-label")
-            .attr("text-anchor", "middle")
-            .attr(
-              "transform",
-              `translate(${margin3.left - 60},${
-                margin3.top + chartHeight3 / 2
-              }) rotate(-90)`
+            .text("1")
+            .style("fill", "white")
+            .attr("x", 31)
+            .attr("y", 25)
+            .style("font-size", "10px");
+          d3.select("#legend")
+            .append("text")
+            .text(`${tcrashExtent[1]}`)
+            .style("fill", "white")
+            .attr("x", 195)
+            .attr("y", 25)
+            .style("font-size", "10px");
+        });
+      });
+    </script>
+
+    <h3>Section 2: Line Chart</h3>
+
+    Number of Car Crashes Each Month from 2019-2024
+
+    <div id="line-chart"></div>
+
+    <script>
+      let margin = { top: 10, right: 30, bottom: 50, left: 70 },
+        width = 860 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+
+      const svg = d3
+        .select("#line-chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+      const chartGroup = svg
+        .append("g")
+        .attr(
+          "transform",
+          "translate(" + margin.left + "," + margin.top + ")"
+        );
+
+      d3.csv("Crash_Monthly_Count.csv", function (d) {
+        return {
+          date: d3.timeParse("%Y-%m-%d")(d.Date),
+          crashes: +d.Counts,
+        };
+      })
+        .then(function (data) {
+          let x = d3
+            .scaleTime()
+            .domain(
+              d3.extent(data, function (d) {
+                return d.date;
+              })
             )
+            .range([0, width]);
+
+          chartGroup
+            .append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+          let y = d3
+            .scaleLinear()
+            .domain([
+              0,
+              d3.max(data, function (d) {
+                return d.crashes;
+              }),
+            ])
+            .range([height, 0]);
+
+          chartGroup.append("g").call(d3.axisLeft(y));
+
+          svg
+            .append("text")
+            .attr("class", "x-axis-label")
+            .attr("text-anchor", "middle")
+            .attr("x", (width + margin.left + margin.right) / 2)
+            .attr("y", height + margin.top + margin.bottom - 10)
+            .attr("font-size", "14px")
+            .attr("fill", "white")
+            .text("Year");
+
+          svg
+            .append("text")
+            .attr("class", "y-axis-label")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -(height + margin.top + margin.bottom) / 2)
+            .attr("y", 14)
             .attr("font-size", "14px")
             .attr("fill", "white")
             .text("Number of Crashes");
 
-          const hours = data.map(d => d["CRASH HOUR"]);
-          const hourScale = d3
-            .scaleBand()
-            .domain(hours)
-            .range([0, chartWidth3])
-            .padding(0.4);
-
-          let bottomAxis = d3.axisBottom(hourScale).tickFormat(d => d + ":00");
-          let bottomAxisG = annotations
-            .append("g")
-            .attr("class", "x axis")
+          chartGroup
+            .append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1.5)
             .attr(
-              "transform",
-              `translate(${margin3.left},${chartHeight3 + margin3.top + 10})`
-            )
-            .call(bottomAxis);
+              "d",
+              d3
+                .line()
+                .x(function (d) {
+                  return x(d.date);
+                })
+                .y(function (d) {
+                  return y(d.crashes);
+                })
+            );
 
-          annotations
-            .append("text")
-            .attr("class", "x axis-label")
-            .attr("text-anchor", "middle")
-            .attr("x", margin3.left + chartWidth3 / 2)
-            .attr("y", height3 - 20)
-            .attr("font-size", "14px")
-            .attr("fill", "white")
-            .text("Time (Hour)");
-
-          chartArea
-            .selectAll("rect.bar")
-            .data(data, d => d["COUNT"])
-            .join("rect")
-            .attr("class", "bar")
-            .attr("fill", "lightblue")
-            .attr("x", d => hourScale(d["CRASH HOUR"]))
-            .attr("y", d => countScale(d["COUNT"]))
-            .attr("height", d => countScale(0) - countScale(d["COUNT"]))
-            .attr("width", hourScale.bandwidth())
-            .attr("rx", 4)
-            .attr("ry", 4);
+          chartGroup
+            .selectAll("circle")
+            .data(data)
+            .join("circle")
+            .attr("cx", function (d) {
+              return x(d.date);
+            })
+            .attr("cy", function (d) {
+              return y(d.crashes);
+            })
+            .attr("r", 5)
+            .attr("fill", "#69b3a2");
+        })
+        .catch(error => {
+          console.error("Error loading Crash_Monthly_Count.csv:", error);
         });
-      </script>
-    </center>
-  </body>
+    </script>
+
+    <h3>Section 3: Histogram</h3>
+    Total Number of Car Crashes At Each Hour (2020-2024)
+    <div>
+      <svg id="barchart" height="400" width="960" style="margin-top: 50px"></svg>
+    </div>
+
+    <script>
+      const svg3 = d3
+        .select("svg#barchart")
+        .attr("style", "background-color: #000000;");
+      const width3 = svg3.attr("width");
+      const height3 = svg3.attr("height");
+      const margin3 = { top: 20, right: 20, bottom: 70, left: 100 };
+      const chartWidth3 = width3 - margin3.left - margin3.right;
+      const chartHeight3 = height3 - margin3.top - margin3.bottom;
+
+      let annotations = svg3.append("g").attr("id", "annotations");
+
+      let chartArea = svg3
+        .append("g")
+        .attr("id", "points")
+        .attr("transform", `translate(${margin3.left},${margin3.top})`);
+
+      d3.csv("Hourly_Crash_Count.csv", d3.autoType).then(data => {
+        const countScale = d3
+          .scaleLinear()
+          .domain([0, d3.max(data, d => d["COUNT"])])
+          .range([chartHeight3, 0]);
+
+        let leftAxis = d3.axisLeft(countScale);
+        let leftGridlines = d3
+          .axisLeft(countScale)
+          .tickSize(-chartWidth3 - 10)
+          .tickFormat("");
+
+        annotations
+          .append("g")
+          .attr("class", "y axis")
+          .attr("transform", `translate(${margin3.left - 10},${margin3.top})`)
+          .call(leftAxis)
+          .selectAll("text");
+
+        annotations.selectAll(".y.axis line, .y.axis path");
+
+        annotations
+          .append("g")
+          .attr("class", "y gridlines")
+          .attr("transform", `translate(${margin3.left - 10},${margin3.top})`)
+          .call(leftGridlines)
+          .selectAll("line")
+          .attr("stroke", "#444444");
+
+        annotations
+          .append("text")
+          .attr("class", "y axis-label")
+          .attr("text-anchor", "middle")
+          .attr(
+            "transform",
+            `translate(${margin3.left - 60},${margin3.top + chartHeight3 / 2
+            }) rotate(-90)`
+          )
+          .attr("font-size", "14px")
+          .attr("fill", "white")
+          .text("Number of Crashes");
+
+        const hours = data.map(d => d["CRASH HOUR"]);
+        const hourScale = d3
+          .scaleBand()
+          .domain(hours)
+          .range([0, chartWidth3])
+          .padding(0.4);
+
+        let bottomAxis = d3.axisBottom(hourScale).tickFormat(d => d + ":00");
+        let bottomAxisG = annotations
+          .append("g")
+          .attr("class", "x axis")
+          .attr(
+            "transform",
+            `translate(${margin3.left},${chartHeight3 + margin3.top + 10})`
+          )
+          .call(bottomAxis);
+
+        annotations
+          .append("text")
+          .attr("class", "x axis-label")
+          .attr("text-anchor", "middle")
+          .attr("x", margin3.left + chartWidth3 / 2)
+          .attr("y", height3 - 20)
+          .attr("font-size", "14px")
+          .attr("fill", "white")
+          .text("Time (Hour)");
+
+        chartArea
+          .selectAll("rect.bar")
+          .data(data, d => d["COUNT"])
+          .join("rect")
+          .attr("class", "bar")
+          .attr("fill", "lightblue")
+          .attr("x", d => hourScale(d["CRASH HOUR"]))
+          .attr("y", d => countScale(d["COUNT"]))
+          .attr("height", d => countScale(0) - countScale(d["COUNT"]))
+          .attr("width", hourScale.bandwidth())
+          .attr("rx", 4)
+          .attr("ry", 4);
+      });
+    </script>
+  </center>
+</body>
+
 </html>
